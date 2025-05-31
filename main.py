@@ -2,36 +2,95 @@ import datetime
 from tabulate import tabulate
 
 from api_databall import get_fixtures_by_date, get_match_statistics
-from db_utils import insert_match, insert_match_statistics
+from db_utils import insert_match, insert_match_statistics, query_stored_matches, export_matches_to_excel
+from utils import get_date_range
+from config_leagues import TRACKED_LEAGUES
 
-# Placeholder: Download and store data based on a given date
+
+
 def download_data():
     print("\n📥 [SYNC] Downloading data...")
-    date_str = input("📅 Enter date (YYYY-MM-DD) or press Enter for today: ")
-    if not date_str:
-        date_str = datetime.date.today().isoformat()
-    print(f"🔎 Fetching matches for {date_str}...")
-    # fixtures = get_fixtures_by_date(date_str)
-    # for fixture in fixtures:
-    #     insert_match(...)  # Placeholder for inserting each match
+    print("\nChoose a time range:")
+    print("\n1. Day")
+    print("2. Week")
+    print("3. Month")
+    print("4. Year")
+    period_choice = input("\n👉 Select a period (1-4): ")
+
+    period_map = {"1": "day", "2": "week", "3": "month", "4": "year"}
+    period = period_map.get(period_choice)
+    if not period:
+        print("❌ Invalid choice.")
+        return
+
+    print("\nChoose a range option:")
+    print("\n1. Current")
+    print("2. Last")
+    print("3. Custom")
+    option_choice = input("\n👉 Select an option (1-3): ")
+
+    option_map = {"1": "current", "2": "last", "3": "custom"}
+    option = option_map.get(option_choice)
+    if not option:
+        print("❌ Invalid option.")
+        return
+
+    custom_value = None
+    if option == "custom":
+        if period == "day" or period == "week":
+            custom_value = input("📅 Enter date (YYYY-MM-DD): ")
+        elif period == "month":
+            custom_value = input("📅 Enter month (YYYY-MM): ")
+        elif period == "year":
+            custom_value = input("📅 Enter year (YYYY): ")
+
+    try:
+        start_date, end_date = get_date_range(period, option, custom_value)
+    except ValueError as e:
+        print(f"❌ Error: {e}")
+        return
+
+    print(f"🔎 Fetching matches from {start_date} to {end_date}...")
+    fixtures = []
+    for league in TRACKED_LEAGUES:
+        league_id = league["league_id"]
+        league_fixtures = get_fixtures_by_date(start_date, end_date, league_id=league_id)
+        fixtures.extend(league_fixtures)
+
+    match_ids = []
+    for fixture in fixtures:
+        match_id = insert_match(fixture)
+        if match_id:
+            match_ids.append(match_id)
 
     print("📊 Fetching statistics for matches...")
-    # for match_id in match_ids:
-    #     stats = get_match_statistics(match_id)
-    #     insert_match_statistics(...)  # Placeholder for inserting stats
+    for match_id in match_ids:
+        stats = get_match_statistics(match_id)
+        if stats:
+            insert_match_statistics(match_id, stats)
 
-    print("✅ [DONE] Data synced (placeholder)")
+    print("✅ [DONE] Data synced")
 
-# Placeholder: View stored data
+# View stored data
 def view_data():
-    print("📋 [VIEW] Displaying stored matches (placeholder)")
-    # rows = query_stored_matches()
-    # print(tabulate(rows, headers="keys"))
+    print("📋 [VIEW] Displaying stored matches")
+    matches = query_stored_matches()
+    if matches:
+        print(tabulate(matches, headers="keys", tablefmt="fancy_grid"))
+    else:
+        print("⚠️ No matches found in the database.")
 
-# Placeholder: Export data to Excel
+# Export data to Excel
 def export_data():
-    print("📤 [EXPORT] Exporting data to Excel (placeholder)")
-    # export_to_excel()
+    print("📤 [EXPORT] Exporting data to Excel...")
+    filename = input("💾 Enter filename (default: matches.xlsx): ").strip()
+    if not filename:
+        filename = "matches.xlsx"
+    success = export_matches_to_excel(filename)
+    if success:
+        print(f"✅ Data exported successfully to {filename}")
+    else:
+        print("❌ Failed to export data.")
 
 # CLI Menu
 def main():
