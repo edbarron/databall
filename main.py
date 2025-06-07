@@ -71,22 +71,119 @@ def download_data():
 
 
 def view_data():
-    print("📋 [VIEW] Displaying stored matches")
-    matches = query_stored_matches()
+    print("\n📋 [VIEW] Display stored matches by time range")
+
+    print("\nChoose a time range:")
+    print("1. Day")
+    print("2. Week")
+    print("3. Month")
+    print("4. Year")
+    period_choice = input("\n👉 Select a period (1-4): ")
+
+    period_map = {"1": "day", "2": "week", "3": "month", "4": "year"}
+    period = period_map.get(period_choice)
+    if not period:
+        print("❌ Invalid choice.")
+        return
+
+    print("\nChoose a range option:")
+    print("1. Current")
+    print("2. Last")
+    print("3. Custom")
+    option_choice = input("\n👉 Select an option (1-3): ")
+
+    option_map = {"1": "current", "2": "last", "3": "custom"}
+    option = option_map.get(option_choice)
+    if not option:
+        print("❌ Invalid option.")
+        return
+
+    custom_value = None
+    if option == "custom":
+        if period in ["day", "week"]:
+            custom_value = input("📅 Enter date (YYYY-MM-DD): ")
+        elif period == "month":
+            custom_value = input("📅 Enter month (YYYY-MM): ")
+        elif period == "year":
+            custom_value = input("📅 Enter year (YYYY): ")
+
+    try:
+        start_date, end_date = get_date_range(period, option, custom_value)
+    except ValueError as e:
+        print(f"❌ Error: {e}")
+        return
+
+    print(f"\n🔎 Showing matches from {start_date} to {end_date}...")
+
+    matches = query_stored_matches(start_date, end_date)
     if matches:
         print(tabulate(matches, headers="keys", tablefmt="fancy_grid"))
     else:
-        print("⚠️ No matches found in the database.")
+        print("⚠️ No matches found in that period.")
 
+import os
+from utils import get_date_range
 
 def export_data():
-    print("📤 [EXPORT] Exporting data to Excel...")
-    filename = input("💾 Enter filename (default: matches.xlsx): ").strip()
+    print("\n📤 [EXPORT] Exporting data to Excel...")
+
+    # Elige el mismo rango que en download_data()
+    print("\nChoose a time range:")
+    print("1. Day")
+    print("2. Week")
+    print("3. Month")
+    print("4. Year")
+    period_choice = input("\n👉 Select a period (1-4): ")
+
+    period_map = {"1": "day", "2": "week", "3": "month", "4": "year"}
+    period = period_map.get(period_choice)
+    if not period:
+        print("❌ Invalid choice.")
+        return
+
+    print("\nChoose a range option:")
+    print("1. Current")
+    print("2. Last")
+    print("3. Custom")
+    option_choice = input("\n👉 Select an option (1-3): ")
+
+    option_map = {"1": "current", "2": "last", "3": "custom"}
+    option = option_map.get(option_choice)
+    if not option:
+        print("❌ Invalid option.")
+        return
+
+    custom_value = None
+    if option == "custom":
+        if period in ["day", "week"]:
+            custom_value = input("📅 Enter date (YYYY-MM-DD): ")
+        elif period == "month":
+            custom_value = input("📅 Enter month (YYYY-MM): ")
+        elif period == "year":
+            custom_value = input("📅 Enter year (YYYY): ")
+
+    try:
+        start_date, end_date = get_date_range(period, option, custom_value)
+    except ValueError as e:
+        print(f"❌ Error: {e}")
+        return
+
+    # Crear carpeta "exports" si no existe
+    os.makedirs("exports", exist_ok=True)
+
+    # Generar nombre de archivo por defecto
+    default_filename = f"exports/matches_{start_date}_to_{end_date}.xlsx"
+    filename = input(f"💾 Enter filename (default: {default_filename}): ").strip()
     if not filename:
-        filename = "matches.xlsx"
-    success = export_matches_to_excel(filename)
+        filename = default_filename
+    elif not filename.endswith(".xlsx"):
+        filename += ".xlsx"
+        filename = os.path.join("exports", filename)
+
+    # Exportar
+    success = export_matches_to_excel(filename, start_date, end_date)
     if success:
-        print(f"✅ Data exported successfully to {filename}")
+        print(f"\n✅ Data exported successfully to {filename}")
     else:
         print("❌ Failed to export data.")
 

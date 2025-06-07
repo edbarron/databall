@@ -142,8 +142,7 @@ def insert_match_statistics(match_id, stats):
     conn.close()
 
 
-# Query stored matches
-def query_stored_matches():
+def query_stored_matches(start_date, end_date):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -153,19 +152,22 @@ def query_stored_matches():
         JOIN leagues l ON m.league_id = l.id
         JOIN teams th ON m.home_team_id = th.id
         JOIN teams ta ON m.away_team_id = ta.id
+        WHERE date BETWEEN ? AND ?
         ORDER BY m.date DESC
-    """)
+    """, (start_date, end_date))
     rows = cursor.fetchall()
     colnames = [description[0] for description in cursor.description]
     conn.close()
     return [dict(zip(colnames, row)) for row in rows]
 
 
-# Export matches to Excel
-def export_matches_to_excel(filename):
+def export_matches_to_excel(filename, start_date, end_date):
     try:
         import pandas as pd
-        data = query_stored_matches()
+        data = query_stored_matches(start_date, end_date)
+        if not data:
+            print("⚠️ No matches found in the selected range.")
+            return False
         df = pd.DataFrame(data)
         df.to_excel(filename, index=False)
         return True
