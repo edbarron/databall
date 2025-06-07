@@ -26,10 +26,15 @@ def get_teams(league_id, season):
         print("Error fetching teams:", response.status_code)
         return []
 
-def get_fixtures_by_date(start_date, end_date, league_id=None):
+def get_fixtures_by_date(start_date, end_date, league_id=None, season=None):
     url = f"{BASE_URL}/fixtures?from={start_date}&to={end_date}"
     if league_id:
         url += f"&league={league_id}"
+    if season:
+        url += f"&season={season}"
+
+        print(f"🌐 Requesting URL: {url}") 
+        
     response = requests.get(url, headers=HEADERS)
     if response.status_code == 200:
         return response.json().get("response", [])

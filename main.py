@@ -54,8 +54,13 @@ def download_data():
     fixtures = []
     for league in TRACKED_LEAGUES:
         league_id = league["league_id"]
-        league_fixtures = get_fixtures_by_date(start_date, end_date, league_id=league_id)
+        league_name = league["name"]
+        season = league["season"]
+        league_fixtures = get_fixtures_by_date(start_date, end_date, league_id=league_id, season=season)
         fixtures.extend(league_fixtures)
+        print(f"→ {league_name}: {len(league_fixtures)} matches loaded")
+
+
 
     match_ids = []
     for fixture in fixtures:
@@ -63,6 +68,7 @@ def download_data():
         if match_id:
             match_ids.append(match_id)
 
+    print(f"\n🧾 Total fixtures to insert: {len(fixtures)}")
     print("📊 Fetching statistics for matches...")
     for match_id in match_ids:
         stats = get_match_statistics(match_id)
