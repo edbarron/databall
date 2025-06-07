@@ -1,17 +1,16 @@
 import datetime
 from tabulate import tabulate
 
-from api_databall import get_fixtures_by_date, get_match_statistics
-from db_utils import insert_match, insert_match_statistics, query_stored_matches, export_matches_to_excel
+from api_databall import get_fixtures_by_date  # Ya no necesitas get_match_statistics
+from db_utils import insert_match, query_stored_matches, export_matches_to_excel
 from utils import get_date_range
 from config_leagues import TRACKED_LEAGUES
-
 
 
 def download_data():
     print("\n📥 [SYNC] Downloading data...")
     print("\nChoose a time range:")
-    print("\n1. Day")
+    print("1. Day")
     print("2. Week")
     print("3. Month")
     print("4. Year")
@@ -24,7 +23,7 @@ def download_data():
         return
 
     print("\nChoose a range option:")
-    print("\n1. Current")
+    print("1. Current")
     print("2. Last")
     print("3. Custom")
     option_choice = input("\n👉 Select an option (1-3): ")
@@ -37,7 +36,7 @@ def download_data():
 
     custom_value = None
     if option == "custom":
-        if period == "day" or period == "week":
+        if period in ["day", "week"]:
             custom_value = input("📅 Enter date (YYYY-MM-DD): ")
         elif period == "month":
             custom_value = input("📅 Enter month (YYYY-MM): ")
@@ -50,34 +49,27 @@ def download_data():
         print(f"❌ Error: {e}")
         return
 
-    print(f"🔎 Fetching matches from {start_date} to {end_date}...")
-    fixtures = []
+    print(f"\n🔎 Fetching matches from {start_date} to {end_date}...")
+    all_fixtures = []
+
     for league in TRACKED_LEAGUES:
-        league_id = league["league_id"]
-        league_name = league["name"]
-        season = league["season"]
-        league_fixtures = get_fixtures_by_date(start_date, end_date, league_id=league_id, season=season)
-        fixtures.extend(league_fixtures)
-        print(f"→ {league_name}: {len(league_fixtures)} matches loaded")
+        code = league["code"]
+        name = league["name"]
+        fixtures = get_fixtures_by_date(start_date, end_date, code)
+        print(f"→ {name}: {len(fixtures)} matches loaded")
+        all_fixtures.extend(fixtures)
 
-
+    print(f"\n🧾 Total fixtures to insert: {len(all_fixtures)}")
 
     match_ids = []
-    for fixture in fixtures:
+    for fixture in all_fixtures:
         match_id = insert_match(fixture)
         if match_id:
             match_ids.append(match_id)
 
-    print(f"\n🧾 Total fixtures to insert: {len(fixtures)}")
-    print("📊 Fetching statistics for matches...")
-    for match_id in match_ids:
-        stats = get_match_statistics(match_id)
-        if stats:
-            insert_match_statistics(match_id, stats)
-
     print("✅ [DONE] Data synced")
 
-# View stored data
+
 def view_data():
     print("📋 [VIEW] Displaying stored matches")
     matches = query_stored_matches()
@@ -86,7 +78,7 @@ def view_data():
     else:
         print("⚠️ No matches found in the database.")
 
-# Export data to Excel
+
 def export_data():
     print("📤 [EXPORT] Exporting data to Excel...")
     filename = input("💾 Enter filename (default: matches.xlsx): ").strip()
@@ -98,7 +90,7 @@ def export_data():
     else:
         print("❌ Failed to export data.")
 
-# CLI Menu
+
 def main():
     while True:
         today = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -122,6 +114,7 @@ def main():
             break
         else:
             print("❌ Invalid option. Please try again.")
+
 
 if __name__ == "__main__":
     main()

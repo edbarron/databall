@@ -48,13 +48,41 @@ def insert_match(fixture):
     cursor = conn.cursor()
 
     try:
-        match_id = fixture["fixture"]["id"]
-        date = fixture["fixture"]["date"][:10]
-        league_id = fixture["league"]["id"]
-        home_team_id = fixture["teams"]["home"]["id"]
-        away_team_id = fixture["teams"]["away"]["id"]
-        home_goals = fixture["goals"]["home"]
-        away_goals = fixture["goals"]["away"]
+        match_id = fixture["id"]
+        date = fixture["utcDate"][:10]
+
+        # Extraer info de liga
+        league = fixture["competition"]
+        league_id = league["id"]
+        league_name = league["name"]
+        country = fixture["area"]["name"]
+        season = fixture.get("season", {}).get("startDate", "unknown")[:4]
+
+        # Insertar liga si no existe
+        cursor.execute("""
+            INSERT OR IGNORE INTO leagues (id, name, country, season)
+            VALUES (?, ?, ?, ?)
+        """, (league_id, league_name, country, season))
+
+        # Extraer e insertar equipos
+        home_team = fixture["homeTeam"]
+        away_team = fixture["awayTeam"]
+
+        cursor.execute("""
+            INSERT OR IGNORE INTO teams (id, name, league_id, country)
+            VALUES (?, ?, ?, ?)
+        """, (home_team["id"], home_team["name"], league_id, country))
+
+        cursor.execute("""
+            INSERT OR IGNORE INTO teams (id, name, league_id, country)
+            VALUES (?, ?, ?, ?)
+        """, (away_team["id"], away_team["name"], league_id, country))
+
+        # Extraer resultado
+        score = fixture.get("score", {})
+        full_time = score.get("fullTime", {})
+        home_goals = full_time.get("home")
+        away_goals = full_time.get("away")
 
         if home_goals is None or away_goals is None:
             result = "pending"
@@ -65,16 +93,25 @@ def insert_match(fixture):
         else:
             result = "draw"
 
+        # Insertar partido
         cursor.execute("""
-            INSERT OR IGNORE INTO matches (id, date, league_id, home_team_id, away_team_id, home_goals, away_goals, result)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (match_id, date, league_id, home_team_id, away_team_id, home_goals, away_goals, result))
+            INSERT OR IGNORE INTO matches (
+                id, date, league_id, home_team_id, away_team_id,
+                home_goals, away_goals, result
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            match_id, date, league_id,
+            home_team["id"], away_team["id"],
+            home_goals, away_goals, result
+        ))
 
         conn.commit()
         return match_id
+
     except Exception as e:
-        print(f"❌ Error inserting match: {e}")
+        print(f"❌ Error inserting match ID {fixture.get('id')}: {e}")
         return None
+
     finally:
         conn.close()
 

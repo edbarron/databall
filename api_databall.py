@@ -1,54 +1,19 @@
 import requests
 from config import API_KEY
 
-BASE_URL = "https://v3.football.api-sports.io"
+BASE_URL = "https://api.football-data.org/v4"
 HEADERS = {
-    "x-apisports-key": API_KEY
+    "X-Auth-Token": API_KEY
 }
 
-# Get all available leagues
-def get_leagues():
-    url = f"{BASE_URL}/leagues"
+# Get fixtures by date and competition code (e.g., PL, CL, SA)
+def get_fixtures_by_date(start_date, end_date, competition_code):
+    url = f"{BASE_URL}/competitions/{competition_code}/matches?dateFrom={start_date}&dateTo={end_date}"
+    print(f"🌐 Requesting URL: {url}")
+    
     response = requests.get(url, headers=HEADERS)
     if response.status_code == 200:
-        return response.json().get("response", [])
+        return response.json().get("matches", [])
     else:
-        print("Error fetching leagues:", response.status_code)
-        return []
-
-# Get all teams for a league and season
-def get_teams(league_id, season):
-    url = f"{BASE_URL}/teams?league={league_id}&season={season}"
-    response = requests.get(url, headers=HEADERS)
-    if response.status_code == 200:
-        return response.json().get("response", [])
-    else:
-        print("Error fetching teams:", response.status_code)
-        return []
-
-def get_fixtures_by_date(start_date, end_date, league_id=None, season=None):
-    url = f"{BASE_URL}/fixtures?from={start_date}&to={end_date}"
-    if league_id:
-        url += f"&league={league_id}"
-    if season:
-        url += f"&season={season}"
-
-        print(f"🌐 Requesting URL: {url}") 
-        
-    response = requests.get(url, headers=HEADERS)
-    if response.status_code == 200:
-        return response.json().get("response", [])
-    else:
-        print(f"Error fetching fixtures for league {league_id}: {response.status_code}")
-        return []
-
-
-# Get match statistics
-def get_match_statistics(fixture_id):
-    url = f"{BASE_URL}/fixtures/statistics?fixture={fixture_id}"
-    response = requests.get(url, headers=HEADERS)
-    if response.status_code == 200:
-        return response.json().get("response", [])
-    else:
-        print("Error fetching statistics:", response.status_code)
+        print(f"❌ Error fetching fixtures for {competition_code}: {response.status_code}")
         return []

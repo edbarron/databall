@@ -10,4 +10,4 @@ DB_PATH = os.path.join(BASE_DIR, "databall.db")
 SCHEMA_FILE = os.path.join(BASE_DIR, "schema.sql")
 
 # API key for API-Football (replace with your real key)
-API_KEY = "c162e04daee872dc018203b52242b582" #your-api-key-here
+API_KEY = "96f21d098a774f81a724d17de03d90af" #your-api-key-here
