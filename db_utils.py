@@ -174,3 +174,37 @@ def export_matches_to_excel(filename, start_date, end_date):
     except Exception as e:
         print(f"❌ Export failed: {e}")
         return False
+
+def get_last_matches_for_team(team_id, limit=5):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT * FROM matches
+        WHERE home_team_id = ? OR away_team_id = ?
+        ORDER BY date DESC
+        LIMIT ?
+    """, (team_id, team_id, limit))
+
+    rows = cursor.fetchall()
+    colnames = [description[0] for description in cursor.description]
+    conn.close()
+    return [dict(zip(colnames, row)) for row in rows]
+
+def query_matches_by_date(date):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT m.id, m.date, l.name as league, th.name as home_team, ta.name as away_team,
+               m.home_team_id, m.away_team_id, m.result
+        FROM matches m
+        JOIN leagues l ON m.league_id = l.id
+        JOIN teams th ON m.home_team_id = th.id
+        JOIN teams ta ON m.away_team_id = ta.id
+        WHERE m.date = ?
+        ORDER BY m.date DESC
+    """, (date,))
+    rows = cursor.fetchall()
+    colnames = [description[0] for description in cursor.description]
+    conn.close()
+    return [dict(zip(colnames, row)) for row in rows]

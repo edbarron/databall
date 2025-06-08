@@ -5,6 +5,7 @@ from api_databall import get_fixtures_by_date  # Ya no necesitas get_match_stati
 from db_utils import insert_match, query_stored_matches, export_matches_to_excel
 from utils import get_date_range
 from config_leagues import TRACKED_LEAGUES
+from simulate import simulate_by_day
 
 
 def download_data():
@@ -183,10 +184,36 @@ def export_data():
     # Exportar
     success = export_matches_to_excel(filename, start_date, end_date)
     if success:
-        print(f"\n✅ Data exported successfully to {filename}")
+        print(f"\n✅ Data exported successfimulate matchully to {filename}")
     else:
         print("❌ Failed to export data.")
+        
+def simulate_match():
+    while True:
+        print("\n🔮 [SIMULATE MATCH]")
+        print("\n1. Simulate by day")
+        print("2. Compare two teams")
+        print("3. Team stats")
+        print("4. Team rankings")
+        print("5. Back to main menu")
 
+        choice = input("\n👉 Select an option (1-5): ")
+        if choice == "1":
+            print("🔍 Simulating by day... (feature in progress)")
+            simulate_by_day()
+        elif choice == "2":
+            print("⚔️ Comparing two teams... (feature in progress)")
+            # compare_teams()
+        elif choice == "3":
+            print("📊 Viewing team stats... (feature in progress)")
+            # show_team_stats()
+        elif choice == "4":
+            print("🏆 Showing team rankings... (feature in progress)")
+            # show_team_rankings()
+        elif choice == "5":
+            break
+        else:
+            print("❌ Invalid choice. Try again.")
 
 def main():
     while True:
@@ -196,7 +223,8 @@ def main():
         print("\n1. Download data")
         print("2. View stored data")
         print("3. Export data")
-        print("4. Exit")
+        print("4. Simulate match")
+        print("5. Exit")
         
         choice = input("\n👉 Select an option: ")
         
@@ -205,8 +233,10 @@ def main():
         elif choice == "2":
             view_data()
         elif choice == "3":
-            export_data()
+            export_data()        
         elif choice == "4":
+            simulate_match()
+        elif choice == "5":
             print("👋 Exiting Databall. Goodbye!")
             break
         else:
