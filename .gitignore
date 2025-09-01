@@ -1,6 +1,17 @@
-*.pyc
+# Python
 __pycache__/
-*.db
+*.py[cod]
+*.egg-info/
+.venv/
 .env
-/exports/
-notes.txt
+
+
+# Databases & local state
+*.db
+exports/
+exports/**
+
+# Editors/OS
+.vscode/
+.idea/
+.DS_Store

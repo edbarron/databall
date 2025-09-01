@@ -1,0 +1,46 @@
+===============================
+LOG - DATABALL PROJECT
+===============================
+
+07/06/2025
+
+✅ FUNCIONALIDADES COMPLETADAS
+
+1. Descarga de datos:
+   - Se descargan correctamente partidos pasados y futuros desde football-data.org.
+   - Datos almacenados en tablas: matches, teams, leagues.
+
+2. Visualización y exportación:
+   - Visualización de partidos por fecha.
+   - Exportación a Excel de los datos filtrados.
+
+3. Esquema funcional:
+   - Base de datos estructurada y coherente para resultados básicos.
+   - Relaciones entre tablas correctamente establecidas.
+
+
+🟠 FUNCIONALIDADES IMPLEMENTADAS, PERO CON ERRORES
+
+1. Simulación de partidos por día:
+   - Se muestra una predicción diaria por partido.
+   - ❌ Problema actual: todos los resultados predicen victoria del visitante, con 100% de confianza y marcador 2-3.
+   - Posible causa: la función `get_last_matches_for_team()` no filtra correctamente los partidos del equipo, o no distingue entre local/visitante.
+
+
+🔴 FALTA POR HACER
+
+1. Corregir la simulación de partidos:
+   - Verificar que `get_last_matches_for_team(team_id, limit)`:
+     a) Filtra bien los partidos del equipo.
+     b) Distingue entre local y visitante.
+     c) Usa resultados reales (win, draw, lose) para generar probabilidades reales.
+
+2. Nuevas funciones por implementar:
+   - Simulación libre entre dos equipos (input por nombre).
+   - Estadísticas individuales por equipo (partidos, goles, victorias).
+   - Ranking de equipos basado en rendimiento o puntos.
+
+3. Mostrar nombres claros:
+   - Asegurarse de mostrar el nombre completo de ligas y equipos en todas las funciones (no solo IDs o códigos).
+
+

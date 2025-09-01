@@ -1,13 +1,10 @@
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 
-# Base directory of the project
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")  # loads only if present
 
-# Path to the SQLite database
-DB_PATH = os.path.join(BASE_DIR, "databall.db")
-
-# Path to the schema.sql file
-SCHEMA_FILE = os.path.join(BASE_DIR, "schema.sql")
-
-# API key for API-Football (replace with your real key)
-API_KEY = "96f21d098a774f81a724d17de03d90af" #your-api-key-here
+DB_PATH = os.getenv("DB_PATH", str(BASE_DIR / "databall.db"))
+SCHEMA_FILE = str(BASE_DIR / "schema.sql")
+API_KEY = os.getenv("API_KEY") 

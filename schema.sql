@@ -31,3 +31,9 @@ CREATE TABLE IF NOT EXISTS matches (
     FOREIGN KEY (home_team_id) REFERENCES teams(id),
     FOREIGN KEY (away_team_id) REFERENCES teams(id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_matches_date ON matches(date);
+CREATE INDEX IF NOT EXISTS idx_matches_home ON matches(home_team_id);
+CREATE INDEX IF NOT EXISTS idx_matches_away ON matches(away_team_id);
+CREATE INDEX IF NOT EXISTS idx_teams_league ON teams(league_id);
+
