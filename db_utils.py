@@ -20,35 +20,43 @@ def get_connection():
 # ----------------------------
 def insert_league(id, name, country, season):
     """
-    Upserts a league. Schema: leagues(id, name, country, season)
+    Upsert de liga por PRIMARY KEY (id).
     """
     with get_connection() as conn:
         conn.execute(
             """
-            INSERT OR IGNORE INTO leagues (id, name, country, season)
+            INSERT INTO leagues (id, name, country, season)
             VALUES (?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                name = excluded.name,
+                country = excluded.country,
+                season = excluded.season
             """,
             (id, name, country, season),
         )
 
 def insert_team(id, name, league_id, country, is_national_team=False):
     """
-    Upserts a team. Schema: teams(id, name, league_id, country)
-    Note: is_national_team is ignored (not in schema now).
+    Upsert de equipo por PRIMARY KEY (id).
     """
     with get_connection() as conn:
         conn.execute(
             """
-            INSERT OR IGNORE INTO teams (id, name, league_id, country)
+            INSERT INTO teams (id, name, league_id, country)
             VALUES (?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                name = excluded.name,
+                league_id = excluded.league_id,
+                country = excluded.country
             """,
             (id, name, league_id, country),
         )
 
 def insert_match(fixture):
     """
-    Inserts a match (and ensures league/teams exist). Safe if re-run due to OR IGNORE.
-    Expects Football-Data.org v4 fixture structure.
+    Upsert de match: actualiza si existe.
+    - No sobreescribe goles con NULL si ya hay marcador.
+    - Cuando hay marcador final, lo actualiza.
     """
     try:
         match_id = fixture["id"]
@@ -78,38 +86,64 @@ def insert_match(fixture):
             result = "draw"
 
         with get_connection() as conn:
-            # Upsert league
+            # UPSERT liga
             conn.execute(
                 """
-                INSERT OR IGNORE INTO leagues (id, name, country, season)
+                INSERT INTO leagues (id, name, country, season)
                 VALUES (?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    country = excluded.country,
+                    season = excluded.season
                 """,
                 (league_id, league_name, country, season),
             )
 
-            # Upsert teams
+            # UPSERT equipos
             conn.execute(
                 """
-                INSERT OR IGNORE INTO teams (id, name, league_id, country)
+                INSERT INTO teams (id, name, league_id, country)
                 VALUES (?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    league_id = excluded.league_id,
+                    country = excluded.country
                 """,
                 (home_team["id"], home_team["name"], league_id, country),
             )
             conn.execute(
                 """
-                INSERT OR IGNORE INTO teams (id, name, league_id, country)
+                INSERT INTO teams (id, name, league_id, country)
                 VALUES (?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    league_id = excluded.league_id,
+                    country = excluded.country
                 """,
                 (away_team["id"], away_team["name"], league_id, country),
             )
 
-            # Insert match
+            # UPSERT partido
+            # - Si el nuevo fixture no trae marcador (NULL), conservamos el existente.
+            # - Si trae marcador final, actualizamos goles y resultado.
             conn.execute(
                 """
-                INSERT OR IGNORE INTO matches (
+                INSERT INTO matches (
                     id, date, league_id, home_team_id, away_team_id,
                     home_goals, away_goals, result
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    date         = excluded.date,
+                    league_id    = excluded.league_id,
+                    home_team_id = excluded.home_team_id,
+                    away_team_id = excluded.away_team_id,
+                    home_goals   = COALESCE(excluded.home_goals, matches.home_goals),
+                    away_goals   = COALESCE(excluded.away_goals, matches.away_goals),
+                    result       = CASE
+                        WHEN excluded.result IS NOT NULL AND excluded.result <> 'pending'
+                            THEN excluded.result
+                        ELSE matches.result
+                    END
                 """,
                 (
                     match_id,
