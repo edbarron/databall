@@ -112,7 +112,7 @@ LEAGUE_FLAG_BY_KEY = {
     _normalize_league_name("Serie A"): "🟩🟩⬜🟥🟥\n🟩🟩⬜🟥🟥\n🟩🟩⬜🟥🟥",
     _normalize_league_name("Campeonato Brasileiro Série A"): "🟩🟩🟨🟩🟩\n🟩🟨🟦🟨🟩\n🟩🟩🟨🟩🟩",
     _normalize_league_name("Campeonato Brasileiro"): "🟩🟩🟨🟩🟩\n🟩🟨🟦🟨🟩\n🟩🟩🟨🟩🟩",
-    _normalize_league_name("UEFA Champions League"): "🌟🌟🌟🌟🌟\n🌟🌟🌟🌟🌟\n🌟🌟🌟🌟🌟",
+    _normalize_league_name("UEFA Champions League"): "🟦🟦⭐🟦🟦\n🟦⭐🟦⭐🟦\n🟦🟦⭐🟦🟦",
 }
 
 def _league_flag(name: str) -> str:
