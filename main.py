@@ -1,6 +1,7 @@
 import os
 from config import BASE_DIR
 import datetime
+import textwrap
 from tabulate import tabulate
 from collections import defaultdict
 import sys
@@ -120,6 +121,27 @@ def _league_flag(name: str) -> str:
     flag = LEAGUE_FLAG_BY_KEY.get(key)
     return flag or "🌍"
 
+def _short_team(name: str, limit: int = 14) -> str:
+    """
+    Trunca el nombre de un equipo a `limit` caracteres (incluyendo espacios),
+    respetando palabras completas cuando es posible. Si una sola palabra
+    ya supera el límite, corta a lo bruto y agrega '…'.
+
+    Esto es puramente cosmético para que tabulate no desencaje la tabla
+    con nombres largos (ej. "Real Racing club de santander" -> "Real Racing…").
+    El nombre original en la DB no se modifica.
+    """
+    if not name:
+        return ""
+    name = name.strip()
+    if len(name) <= limit:
+        return name
+    try:
+        return textwrap.shorten(name, width=limit, placeholder="…")
+    except ValueError:
+        # Ocurre si ni siquiera la primera palabra + "…" entra en el límite
+        return name[: limit - 1].rstrip() + "…"
+
 def print_matches_grouped_compact(matches, show_date=True, tablefmt="fancy_grid", color=True):
     """
     Agrupa por liga y muestra Date | Home | Score | Away con estilo:
@@ -165,7 +187,9 @@ def print_matches_grouped_compact(matches, show_date=True, tablefmt="fancy_grid"
         rows = []
         for m in sorted(groups[league], key=lambda x: (x["date"], x["home_team"])):
             score = fmt_score(m.get("home_goals"), m.get("away_goals"))
-            row = {"Home": f"{BOLD}{m['home_team']}{RESET}", "Score": score, "Away": m["away_team"]}
+            home_name = _short_team(m["home_team"])
+            away_name = _short_team(m["away_team"])
+            row = {"Home": f"{BOLD}{home_name}{RESET}", "Score": score, "Away": away_name}
             if show_date:
                 row = {"Date": m["date"], **row}
             rows.append(row)
@@ -249,9 +273,9 @@ def render_three_day_dashboard():
             rows = []
             for m in items:
                 rows.append({
-                    "\033[94mHome\033[0m": f"{BOLD}{m['home_team']}{RESET}",
+                    "\033[94mHome\033[0m": f"{BOLD}{_short_team(m['home_team'])}{RESET}",
                     "\033[94mScore\033[0m": fmt_score(m.get("home_goals"), m.get("away_goals")),
-                    "\033[94mAway\033[0m": m["away_team"],
+                    "\033[94mAway\033[0m": _short_team(m["away_team"]),
                 })
             print(tabulate(rows, headers="keys", tablefmt="fancy_grid"))
 
